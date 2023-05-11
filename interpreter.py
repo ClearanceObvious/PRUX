@@ -2,7 +2,7 @@ from nodes import *
 from ttoken import *
 from otherFunctions import dump_ast, convert
 
-from time import sleep
+from time import sleep, time
 
 from error import InvalidStatementTypeError, DivisionByZeroError, InvalidConditionOperatorError, StringConcatenationError, VariableError, VariableUnexistentError, FunctionArgumentError
 
@@ -18,6 +18,9 @@ class Interpreter:
             ]),
             'sleep': FunctionNode([Node(NodeType.StringNode, 'number')], [
                 BaseGlobalSleep(VarAccessNode('number'))
+            ]),
+            'time': FunctionNode([], [
+                ReturnNode(BaseGlobalTime())
             ])
         }
 
@@ -81,6 +84,10 @@ class Interpreter:
             return self.visitIndexNode(expression)
         elif expression.type == NodeType.FunctionCallNode:
             return self.visitFunctionCallNode(expression)
+
+        elif expression.type == NodeType.BaseGlobalTime:
+            return Node(NodeType.NumberNode, time())
+
         else:
             InvalidStatementTypeError(expression.type, '', self.current_line)
     
