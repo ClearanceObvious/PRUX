@@ -74,6 +74,7 @@ log(user.age);
 ```js
 log("Hello!");
 sleep(1);
+let timeSinceUnix = time();
 ```
 
 # Limitations
