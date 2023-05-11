@@ -46,9 +46,6 @@ class Lexer:
             elif self.currentChar == '*':
                 tokens.append(Token(TokenType.MULTIPLY, 0))
                 self.advance()
-            elif self.currentChar == '/':
-                tokens.append(Token(TokenType.DIVIDE, 0))
-                self.advance()
             elif self.currentChar == '(':
                 tokens.append(Token(TokenType.LPAREN, 0))
                 self.advance()
@@ -94,6 +91,14 @@ class Lexer:
                 else:
                     tokens.append(Token(TokenType.LT, 0))
                     self.advance()
+            elif self.currentChar == '/':
+                if self.checkNext('/'):
+                    while self.currentChar != None and self.currentChar != '\n':
+                        self.advance()
+                else:
+                    tokens.append(Token(TokenType.DIVIDE, 0))
+                    self.advance()
+                    
             elif self.currentChar == '&':
                 if self.checkNext('&'):
                     tokens.append(Token(TokenType.AND, 0))
