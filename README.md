@@ -96,7 +96,8 @@ importedFunction()
 > ### Exporting
 
 ```js
-// Returns in the main body of the program signal export calls. Only objects are exportable, anything else will result in an error
+// Returns in the main body of the program signal export calls.
+// Only objects are exportable, anything else will result in an error
 
 let x = 100;
 
