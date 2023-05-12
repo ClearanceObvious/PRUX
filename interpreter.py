@@ -25,19 +25,27 @@ class Interpreter:
         }
 
         self.stack = {
-            'func' : []
+            'func' : [],
+            'loop': []
         }
 
     def evaluate(self):
-        self.visitBlock(self.nodes)
+        self.visitBlock(self.nodes, True)
     
-    def visitBlock(self, block):
+    def visitBlock(self, block, main: bool = False):
         for node in block:
             if len(self.stack['func']) != 0:
                 return
-            self.visitStatement(node)
+            if len(self.stack['loop']) != 0:
+                return
+            if not main:
+                self.visitStatement(node, block)
+            else:
+                self.visitStatement(node)
+            
     
-    def visitStatement(self, statement: Node):
+    def visitStatement(self, statement: Node, block: list = []):
+        # Internals
         if statement.type == NodeType.VarCreateNode:
             self.visitVarCreateNode(statement)
         elif statement.type == NodeType.VarOverrideNode:
@@ -46,12 +54,29 @@ class Interpreter:
             self.visitDataStructOverrideNode(statement)
         elif statement.type == NodeType.IfStatementNode:
             self.visitIfStatementNode(statement)
+        elif statement.type == NodeType.WhileLoopNode:
+            self.visitWhileLoopNode(statement)
+        elif statement.type == NodeType.ForLoopNode:
+            self.visitForLoopNode(statement)
 
+        # Branch Operators / NEWL
+        elif statement.type == NodeType.NOP:
+            pass
         elif statement.type == NodeType.NewLineNode:
             self.current_line += 1
+
+            if len(block) != 0:
+                for s in block:
+                    if s.type == NodeType.NewLineNode:
+                        s.type = Node(NodeType.NOP)
+                        break
+    
         elif statement.type == NodeType.ReturnNode:
             self.stack['func'].append(self.visitExpression(statement.returnValue))
+        elif statement.type == NodeType.BreakNode:
+            self.stack['loop'].append(RET_VAL)
         
+        # Globals
         elif statement.type == NodeType.BaseGlobalLog:
             print(self.visitExpression(statement.message).value)
         elif statement.type == NodeType.BaseGlobalSleep:
@@ -118,6 +143,12 @@ class Interpreter:
         return resultNode
 
     def visitUnOpNode(self, node: UnOpNode):
+        if self.visitExpression(node.node).type == NodeType.BooleanNode:
+            return Node(NodeType.BooleanNode, not self.visitExpression(node.node).value)
+        
+        if self.visitExpression(node.node).type == NodeType.CondNode:
+            return Node(NodeType.BooleanNode, not self.visitExpression(node.node).value)
+
         val = float(self.visitExpression(node.node).value)
         return Node(NodeType.NumberNode, -val)
 
@@ -249,8 +280,6 @@ class Interpreter:
         self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
 
         return retVal
-
-        ###TODO: Make it so x.a() works
     
     def updateSymbolTable(self, args, val):
         idx = 0
@@ -298,3 +327,36 @@ class Interpreter:
             if not ranElif:
                 if _else != None:
                     self.visitStatement(_else)
+    
+    def visitWhileLoopNode(self, whln: WhileLoopNode):
+        lastSymb = self.symbolTable.copy()
+        didLine = False
+        while self.visitExpression(whln.condition).value:
+            if didLine:
+                self.visitBlock(whln.body)
+            else:
+                didLine = True
+                self.visitBlock(whln.body)
+                
+
+            if len(self.stack['loop']) != 0:
+                self.stack['loop'].pop()
+                break
+        
+        self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
+    
+    def visitForLoopNode(self, frln: ForLoopNode):
+        lastSymb = self.symbolTable.copy()
+        self.visitStatement(frln.first)
+        idx = 0
+        while self.visitExpression(frln.condition).value:
+            self.visitBlock(frln.body)
+            print(idx)
+            idx += 1
+
+            self.visitStatement(frln.last)
+            if len(self.stack['loop']) != 0:
+                self.stack['loop'].pop()
+                break
+
+        self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
