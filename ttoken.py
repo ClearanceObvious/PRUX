@@ -44,6 +44,8 @@ class TokenType(Enum):
     COMMA = 29
     DOT = 30
 
+    NEG = 31
+
 @dataclass
 class Token:
     type: TokenType
