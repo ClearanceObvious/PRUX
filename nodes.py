@@ -44,6 +44,7 @@ class NodeType(Enum):
     BaseGlobalLog = 22
     BaseGlobalSleep = 23
     BaseGlobalTime = 24
+    BaseGlobalInput = 25
 
 
 @dataclass
@@ -175,3 +176,8 @@ class BaseGlobalSleep(Node):
 class BaseGlobalTime(Node):
     def __init__(self):
         super().__init__(NodeType.BaseGlobalTime, 0)
+
+class BaseGlobalInput(Node):
+    def __init__(self, message: Node):
+        super().__init__(NodeType.BaseGlobalInput, 0)
+        self.message = message
