@@ -70,13 +70,6 @@ log(user.name);
 log(user.age);
 ```
 
-> ### Built-in Functions
-```js
-log("Hello!");
-sleep(1);
-let timeSinceUnix = time();
-```
-
 # Limitations
 
 > ### Inner Function Scopes
@@ -118,4 +111,18 @@ if (1) {
 } else {
 
 }
+```
+
+# Built In Functions
+> ### log
+```js
+// <null> log(<string> message)
+
+log("Hello World!");
+```
+> ### sleep
+```js
+// <null> sleep(<number> amount_of_seconds)
+
+sleep(1);
 ```
