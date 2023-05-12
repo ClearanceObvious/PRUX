@@ -1,7 +1,6 @@
 from ttoken import TokenType
 from nodes import *
 from error import InvalidSyntaxError
-from inspect import isclass
 
 from otherFunctions import KEYWORDS
 
@@ -76,6 +75,10 @@ class Parser:
         
         return True
 
+    def parse_fstring(self):
+        print("NOT IMPLEMENTED YET")
+        pass
+
     def factor(self):
         if self.currentToken != None:
             if self.currentToken.type in [TokenType.NUMBER, TokenType.STRING, TokenType.BOOLEAN, TokenType.NULL]:
@@ -83,6 +86,8 @@ class Parser:
                 __val = self.currentToken.value
                 self.advance()
                 return Node(self.getNodeFromToken(__type), __val)
+            elif self.currentToken.type == TokenType.FSTRING:
+                return self.parse_fstring()
             elif self.currentToken.type == TokenType.NEG:
                 self.advance()
                 cond = self.factor()
@@ -101,11 +106,15 @@ class Parser:
                     return ArrayNode(valueList)
 
                 ### Objects
-                if self.checkNext(TokenType.EQ):
+                if self.checkNext(TokenType.EQ) or self.checkNext(TokenType.CEQ):
                     dictVal = {}
                     curId = Node(NodeType.StringNode, self.check(TokenType.IDENTIFIER))
-                    self.check(TokenType.EQ)
-                    dictVal[curId] = self.expression()
+                    if self.bcheck(TokenType.CEQ):
+                        self.check(TokenType.CEQ)
+                        dictVal[curId] = self.fundefinition()
+                    else:
+                        self.check(TokenType.EQ)
+                        dictVal[curId] = self.expression()
                     if self.bcheck(TokenType.SMCLN):
                         while self.bcheck(TokenType.SMCLN):
                             self.advance()
@@ -317,6 +326,9 @@ class Parser:
             self.advance()
             self.check(TokenType.SMCLN)
             return BreakNode()
+        elif self.currentToken.value == KEYWORDS[7]:    ### Import
+            self.advance()
+            return ImportNode(self.check(TokenType.STRING))
     
     
     def forloop(self):
