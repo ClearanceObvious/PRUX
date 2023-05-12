@@ -4,7 +4,8 @@ from otherFunctions import KEYWORDS, BOOL_VAL, NULL_VAL
 
 LETTERS = 'abcdefghijklmnopqrstuvwxyz' + 'abcdefghijklmnopqrstuvwxyz'.upper() + '_'
 IDENTIFIER_LETTERS = LETTERS + '0123456789'
-STRING = IDENTIFIER_LETTERS + '!@#$%^&*()+]}|\\ \';[{:><,/?~`'
+STRING = IDENTIFIER_LETTERS + '!@#$%^&*()+]}|\\ \';[{:><,/?.~`'
+
 
 class Lexer:
     def __init__(self, content) -> None:
@@ -12,6 +13,7 @@ class Lexer:
         self.currentNum = 0
         self.currentChar = self.text[self.currentNum]
         self.line = 1
+        self.fstring = False
     
     def advance(self):
         self.currentNum += 1
@@ -48,6 +50,9 @@ class Lexer:
                 self.advance()
             elif self.currentChar == '*':
                 tokens.append(Token(TokenType.MULTIPLY, 0))
+                self.advance()
+            elif self.currentChar == '$':
+                tokens.append(Token(TokenType.AID, 0))
                 self.advance()
             elif self.currentChar == '(':
                 tokens.append(Token(TokenType.LPAREN, 0))
@@ -162,7 +167,7 @@ class Lexer:
 
         return nstr
 
-    def lex_string(self):
+    def lex_string(self, exclude_fstr: bool = False):
         string = ''
         
         while self.currentChar != None and self.currentChar in STRING:
@@ -173,7 +178,7 @@ class Lexer:
 
     def lex_id(self):
         identifier = ''
-        while self.currentChar != None and self.currentChar in LETTERS:
+        while self.currentChar != None and self.currentChar in IDENTIFIER_LETTERS:
             identifier += self.currentChar
             self.advance()
         
