@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from ttoken import TokenType
 
 class NodeType(Enum):
+    NOP = -2
     NewLineNode = -1
 
     NumberNode = 0
@@ -33,10 +34,11 @@ class NodeType(Enum):
     IfStatementNode = 18
     ForLoopNode = 19
     WhileLoopNode = 20
+    BreakNode = 21
 
-    BaseGlobalLog = 21
-    BaseGlobalSleep = 22
-    BaseGlobalTime = 23
+    BaseGlobalLog = 22
+    BaseGlobalSleep = 23
+    BaseGlobalTime = 24
 
 
 @dataclass
@@ -123,7 +125,6 @@ class FunctionCallNode(Node):
         self.args = args
         self.name = name
         self.path = path
-        self.haspath = hasPath
 
 class IfStatementNode(Node):
     def __init__(self, condition: CondNode, body: list = [], elifs: list = [], _else: Node = None):
@@ -132,6 +133,24 @@ class IfStatementNode(Node):
         self.body = body
         self.elifs = elifs
         self._else = _else
+
+class WhileLoopNode(Node):
+    def __init__(self, condition: CondNode, body: list = []):
+        super().__init__(NodeType.WhileLoopNode, 0)
+        self.condition = condition
+        self.body = body
+
+class ForLoopNode(Node):
+    def __init__(self, first: Node, condition: CondNode, last: Node, body: list = []):
+        super().__init__(NodeType.ForLoopNode, 0)
+        self.first = first
+        self.condition = condition
+        self.last = last
+        self.body = body
+
+class BreakNode(Node):
+    def __init__(self):
+        super().__init__(NodeType.BreakNode, 0)
 
 class BaseGlobalLog(Node):
     def __init__(self, message: Node):
