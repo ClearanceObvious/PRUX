@@ -4,6 +4,7 @@ from ttoken import TokenType
 from nodes import NodeType
 
 class ErrorType(Enum):
+    ExportError = -2
     InvalidFileNameError = -1
 
     InvalidCharacterError = 0           ### Lexer Error
@@ -75,6 +76,12 @@ class FunctionArgumentError(BaseError):
         message = f'Number of Arguments {numOfArguments} does not match with number of paramaters {numOfParamaters}.'
 
         super().__init__(ErrorType.FunctionArgumentError, message, line)
+
+class ExportError(BaseError):
+    def __init__(self, exportType: NodeType, line: int = 1):
+        message = f'Cannot export {exportType.name}. Only "Objects" are exportable.'
+
+        super().__init__(ErrorType.ExportError, message, line)
 
 class InvalidFileNameError(BaseError):
     def __init__(self, extension):
