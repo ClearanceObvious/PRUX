@@ -96,23 +96,6 @@ let functions = [func1, 0];
 let zero = functions[0]()[0]; //Invalid
 ```
 
-# Cool Features
-> ### Dynamic If Statements
-```js
-//Allows Rewrital of Else Statements within blocks and Else if Statements are able to be defined after else statements too
-if (1) {
-
-} else if (2) {
-
-} else {
-
-} else if (3) {
-
-} else {
-
-}
-```
-
 # Built In Functions
 > ### log
 ```js
