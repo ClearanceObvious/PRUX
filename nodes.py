@@ -1,13 +1,18 @@
 from enum import Enum
 from dataclasses import dataclass
 from ttoken import TokenType
+import sys
 
 class NodeType(Enum):
-    NOP = -2
-    NewLineNode = -1
+    NOP = -3
+    NewLineNode = -2
+    ImportNode = -1
 
     NumberNode = 0
+
     StringNode = 1
+    FStringNode = 1
+    
     BooleanNode = 2
     NullNode = 3
 
@@ -151,6 +156,11 @@ class ForLoopNode(Node):
 class BreakNode(Node):
     def __init__(self):
         super().__init__(NodeType.BreakNode, 0)
+
+class ImportNode(Node):
+    def __init__(self, path: str):
+        super().__init__(NodeType.ImportNode, 0)
+        self.path = path
 
 class BaseGlobalLog(Node):
     def __init__(self, message: Node):
