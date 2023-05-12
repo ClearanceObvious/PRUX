@@ -31,6 +31,9 @@ class Lexer:
                     self.line += 1
                     tokens.append(Token(TokenType.NEWL, 0))
                 self.advance()
+            elif self.currentChar == '!':
+                tokens.append(Token(TokenType.NEG, 0))
+                self.advance()
             elif self.currentChar == ',':
                 tokens.append(Token(TokenType.COMMA, 0))
                 self.advance()
