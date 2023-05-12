@@ -1,7 +1,7 @@
 from nodes import NodeType, Node
 from ttoken import TokenType
 
-KEYWORDS = ['let', 'return', 'if', 'else']
+KEYWORDS = ['let', 'return', 'if', 'else', 'while', 'for', 'break']
 BOOL_VAL = ['true', 'false']
 NULL_VAL = 'null'
 
