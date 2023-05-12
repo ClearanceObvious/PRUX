@@ -146,3 +146,10 @@ log("Hello World!");
 
 sleep(1);
 ```
+> ### input
+```js
+// <string> input(<string> input_text)
+
+let answer = input("What's your name?");
+log(answer);
+```
