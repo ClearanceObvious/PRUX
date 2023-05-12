@@ -51,7 +51,20 @@ if (name == "Michael" && age == 15) {
 }
 ```
 
+> ### Loops
+
+```js
+while (true) {
+  log("Infinite Loop!");
+}
+
+for (let x = 0; x <= 10; x += 1) {
+  log("Iteration: " + x);
+}
+```
+
 > ### Arrays
+
 ```js
 let names = ["Michael", "Chloe", "Sundae"];
 log(names[0]);
@@ -60,6 +73,7 @@ log(names[0]);
 ```
 
 > ### Objects
+
 ```js
 let user = [
   name = "Michael";
