@@ -428,7 +428,7 @@ class Parser:
             args.append(Node(NodeType.StringNode, self.check(TokenType.IDENTIFIER)))
             while self.bcheck(TokenType.COMMA):
                 self.advance()
-                args.append(self.expression())
+                args.append(Node(NodeType.StringNode, self.check(TokenType.IDENTIFIER)))
 
         self.check(TokenType.RPAREN)
 
