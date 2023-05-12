@@ -90,7 +90,8 @@ class Interpreter:
         
         # Globals
         elif statement.type == NodeType.BaseGlobalLog:
-            print(self.visitExpression(statement.message).value)
+            val = self.visitExpression(statement.message).value
+            print(self.visitLogNode(val))
         elif statement.type == NodeType.BaseGlobalSleep:
             sleep(self.visitExpression(statement.number).value)
 
@@ -401,3 +402,28 @@ class Interpreter:
             
             otherFile.symbolTable.update(otherFile.iSymbol)
             self.iSymbol.update(otherFile.symbolTable)
+    
+    def visitLogNode(self, message):
+        string = ''
+
+        idx = 0
+        while (idx < len(message)):
+            char = message[idx]
+            nextChar = message[idx + 1] if idx + 1 < len(message) else message[idx]
+
+            if char == '\\':
+                if nextChar == 'n':
+                    idx += 2
+                    string += '\n'
+                    continue
+                elif nextChar == '\\':
+                    idx += 2
+                    string += '\\'
+                    continue
+                idx += 2
+                continue
+            
+            string += char
+            idx += 1
+        
+        return string
