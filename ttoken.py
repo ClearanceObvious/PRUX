@@ -46,6 +46,9 @@ class TokenType(Enum):
 
     NEG = 31
 
+    FSTRING = 32
+    AID = 33
+
 @dataclass
 class Token:
     type: TokenType
