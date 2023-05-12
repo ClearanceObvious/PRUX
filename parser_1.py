@@ -3,7 +3,7 @@ from nodes import *
 from error import InvalidSyntaxError
 from inspect import isclass
 
-from otherFunctions import KEYWORDS, NULL_VAL, BOOL_VAL
+from otherFunctions import KEYWORDS
 
 class Parser:
     def __init__(self, tokens) -> None:
@@ -83,6 +83,13 @@ class Parser:
                 __val = self.currentToken.value
                 self.advance()
                 return Node(self.getNodeFromToken(__type), __val)
+            elif self.currentToken.type == TokenType.NEG:
+                self.advance()
+                cond = self.factor()
+                if (cond in [NodeType.StringNode, NodeType.NumberNode]):
+                    InvalidSyntaxError(cond, self.current_line, 'Expected Condition or Boolean.')
+                
+                return UnOpNode(cond)
             elif self.currentToken.type == TokenType.LSQPAREN:
                 ### Arrays & Objects
                 valueList = {}
@@ -262,6 +269,15 @@ class Parser:
                 self.advance()
                 return VarOverrideNode(identifier, self.fundefinition())
             
+            ### Compound Operators
+            if self.currentToken.type in [TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY, TokenType.DIVIDE]:
+                operator = self.currentToken.type
+                self.advance()
+                self.check(TokenType.EQ)
+                val = self.expression()
+                self.check(TokenType.SMCLN)
+                return VarOverrideNode(identifier, BinOpNode(VarAccessNode(identifier), operator, val))
+
             self.check(TokenType.EQ)
             value = self.expression()
             self.check(TokenType.SMCLN)
@@ -291,7 +307,75 @@ class Parser:
         elif self.currentToken.value == KEYWORDS[2]:    ### If Statement
             self.advance()
             return self.ifstatement()
+        elif self.currentToken.value == KEYWORDS[4]:    ### While Loops
+            self.advance()
+            return self.whileloop()
+        elif self.currentToken.value == KEYWORDS[5]:    ### For Loops
+            self.advance()
+            return self.forloop()
+        elif self.currentToken.value == KEYWORDS[6]:    ### Break Statements
+            self.advance()
+            self.check(TokenType.SMCLN)
+            return BreakNode()
     
+    
+    def forloop(self):
+        ### Conditions
+        operator = None
+        self.check(TokenType.LPAREN)
+
+        # Cond1
+        val = self.check(TokenType.KEYWORD)
+        if val != KEYWORDS[0]:
+            InvalidSyntaxError(TokenType.KEYWORD, self.current_line, f'Got "{val}", expected "let".')
+        
+        id = self.check(TokenType.IDENTIFIER)
+        self.check(TokenType.EQ)
+        val = self.expression()
+        cond1 = VarCreateNode(id, val)
+        # Cond1
+
+        self.check(TokenType.SMCLN)
+
+        # Cond2
+        condition = self.expression()
+        # Cond2
+
+        self.check(TokenType.SMCLN)
+
+        # Cond3
+        id = self.check(TokenType.IDENTIFIER)
+        if self.currentToken.type in [TokenType.PLUS, TokenType.MINUS, TokenType.MULTIPLY, TokenType.DIVIDE]:
+            operator = self.currentToken.type
+            self.advance()
+        
+        self.check(TokenType.EQ)
+        val = self.expression()
+        cond3 = VarOverrideNode(id, val if operator == None else BinOpNode(VarAccessNode(id), operator, val))
+        # Cond3
+
+        self.check(TokenType.RPAREN)
+
+        ### Block
+        self.check(TokenType.LCPAREN)
+        body = self.block(True)
+        self.check(TokenType.RCPAREN)
+
+        return ForLoopNode(cond1, condition, cond3, body)
+
+    def whileloop(self):
+        ### Condition
+        self.check(TokenType.LPAREN)
+        condition = self.expression()
+        self.check(TokenType.RPAREN)
+
+        ### Body
+        self.check(TokenType.LCPAREN)
+        body = self.block(True)
+        self.check(TokenType.RCPAREN)
+
+        return WhileLoopNode(condition, body)
+
     def ifstatement(self, ignoreElseOrElifs: bool = False):
         elifs = []
         _else = None
