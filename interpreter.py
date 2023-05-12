@@ -1,10 +1,11 @@
-from nodes import *
-from ttoken import *
-from otherFunctions import dump_ast, convert
+from otherFunctions import convert
+
+from lexer import *
+from parser_1 import *
 
 from time import sleep, time
 
-from error import InvalidStatementTypeError, DivisionByZeroError, InvalidConditionOperatorError, StringConcatenationError, VariableError, VariableUnexistentError, FunctionArgumentError
+from error import *
 
 RET_VAL = Node(NodeType.NullNode, 0)
 
@@ -12,6 +13,7 @@ class Interpreter:
     def __init__(self, ast):
         self.current_line = 1
         self.nodes = ast
+        self.iSymbol = {}
         self.symbolTable = {
             'log': FunctionNode([Node(NodeType.StringNode, 'value')], [
                 BaseGlobalLog(VarAccessNode('value'))
@@ -29,6 +31,8 @@ class Interpreter:
             'loop': []
         }
 
+        self.importRet = None
+
     def evaluate(self):
         self.visitBlock(self.nodes, True)
     
@@ -41,10 +45,10 @@ class Interpreter:
             if not main:
                 self.visitStatement(node, block)
             else:
-                self.visitStatement(node)
+                self.visitStatement(node, lookForReturn = True)
             
     
-    def visitStatement(self, statement: Node, block: list = []):
+    def visitStatement(self, statement: Node, block: list = [], lookForReturn: bool = False):
         # Internals
         if statement.type == NodeType.VarCreateNode:
             self.visitVarCreateNode(statement)
@@ -58,6 +62,8 @@ class Interpreter:
             self.visitWhileLoopNode(statement)
         elif statement.type == NodeType.ForLoopNode:
             self.visitForLoopNode(statement)
+        elif statement.type == NodeType.ImportNode:
+            self.visitImportNode(statement)
 
         # Branch Operators / NEWL
         elif statement.type == NodeType.NOP:
@@ -72,7 +78,13 @@ class Interpreter:
                         break
     
         elif statement.type == NodeType.ReturnNode:
-            self.stack['func'].append(self.visitExpression(statement.returnValue))
+            if lookForReturn:
+                val = self.visitExpression(statement.returnValue)
+                if val.type != NodeType.ObjectNode:
+                    ExportError(val.type, self.current_line)
+                self.importRet = self.visitExpression(val, True)
+            else:
+                self.stack['func'].append(self.visitExpression(statement.returnValue))
         elif statement.type == NodeType.BreakNode:
             self.stack['loop'].append(RET_VAL)
         
@@ -219,6 +231,10 @@ class Interpreter:
 
     def visitVarCreateNode(self, node: VarCreateNode, override: bool=False, regardlessOfExistence: bool = False):
         valNode = self.visitExpression(node.value)
+
+        if override and node.name in self.iSymbol:
+            self.iSymbol[node.name] = valNode
+
         if node.name in self.symbolTable and override == False:
             VariableError(node.name, self.current_line)
         if not (node.name in self.symbolTable) and override == True and not regardlessOfExistence:
@@ -227,27 +243,36 @@ class Interpreter:
         self.symbolTable[node.name] = valNode
     
     def visitVarAccessNode(self, node: VarAccessNode):
-        if not (node.name in self.symbolTable):
-            VariableUnexistentError(node.name, self.current_line)
+        if node.name in self.symbolTable: pass
+        elif node.name in self.iSymbol: pass
+        else: VariableUnexistentError(node.name, self.current_line)
+        
+        symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol
 
-        valNode = self.visitExpression(self.symbolTable[node.name])
+        valNode = self.visitExpression(symb[node.name])
         return valNode
     
     def visitIndexNode(self, node: IndexNode):
-        if not (node.name in self.symbolTable):
-            VariableUnexistentError(node.name, self.current_line)
+        if node.name in self.symbolTable: pass
+        elif node.name in self.iSymbol: pass
+        else: VariableUnexistentError(node.name, self.current_line)
         
+        symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol
+
         valNode = None
         for explNode in node.path:
-            valNode = valNode.value[(self.visitExpression(explNode))] if valNode != None else self.symbolTable[node.name].value[(self.visitExpression(explNode))]
+            valNode = valNode.value[(self.visitExpression(explNode))] if valNode != None else symb[node.name].value[(self.visitExpression(explNode))]
                 
         return self.visitExpression(valNode)
 
     def visitDataStructOverrideNode(self, node: DataStructOverrideNode):
-        if not (node.name in self.symbolTable):
-            VariableUnexistentError(node.name, self.current_line)
+        if node.name in self.symbolTable: pass
+        elif node.name in self.iSymbol: pass
+        else: VariableUnexistentError(node.name, self.current_line)
+        
+        symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol
 
-        valNode = self.symbolTable[node.name]
+        valNode = symb[node.name]
         if len(node.path) > 1:
             valNode = self.symbolTable[node.name].value[(self.visitExpression(node.path[0]))]
             if len(node.path) > 2:
@@ -257,8 +282,9 @@ class Interpreter:
         valNode.value[(self.visitExpression(node.path[-1]))] = self.visitExpression(node.value)
     
     def visitFunctionCallNode(self, node: FunctionCallNode):
-        if not (node.name in self.symbolTable):
-            VariableUnexistentError(node.name, self.current_line)
+        if node.name in self.symbolTable: pass
+        elif node.name in self.iSymbol: pass
+        else: VariableUnexistentError(node.name, self.current_line)
         
         lastSymb = self.symbolTable.copy()
         funNode = self.symbolTable[node.name] if node.path == None else self.visitExpression(node.path)
@@ -351,7 +377,6 @@ class Interpreter:
         idx = 0
         while self.visitExpression(frln.condition).value:
             self.visitBlock(frln.body)
-            print(idx)
             idx += 1
 
             self.visitStatement(frln.last)
@@ -360,3 +385,19 @@ class Interpreter:
                 break
 
         self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
+    
+    def visitImportNode(self, node):
+        if node.path.split('.')[1] != 'rux':
+            InvalidFileNameError(node.path.split('.')[1])
+
+        file = open(node.path, 'r')
+
+        otherFile = Interpreter(Parser(Lexer(file.read()).lex()).parse())
+        otherFile.evaluate()
+
+        if otherFile.importRet != None:
+            for i, v in otherFile.importRet.value.items():
+                self.visitVarOverrideNode(VarOverrideNode(convert(i), v), True)
+            
+            otherFile.symbolTable.update(otherFile.iSymbol)
+            self.iSymbol.update(otherFile.symbolTable)
