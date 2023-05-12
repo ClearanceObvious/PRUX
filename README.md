@@ -58,7 +58,7 @@ while (true) {
   log("Infinite Loop!");
 }
 
-for (let x = 0; x <= 10; x += 1) {
+for (let x = 0; !(x >= 10); x += 1) {
   log("Iteration: " + x);
 }
 ```
@@ -82,6 +82,28 @@ let user = [
 
 log(user.name);
 log(user.age);
+```
+
+> ### Importing Files
+
+```js
+import "filename.rux"
+
+//Gets imported to the global scope
+importedFunction()
+```
+
+> ### Exporting
+
+```js
+// Returns in the main body of the program signal export calls. Only objects are exportable, anything else will result in an error
+
+let x = 100;
+
+return [
+  x = x
+];
+
 ```
 
 # Limitations
