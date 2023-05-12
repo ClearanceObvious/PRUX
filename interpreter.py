@@ -23,6 +23,9 @@ class Interpreter:
             ]),
             'time': FunctionNode([], [
                 ReturnNode(BaseGlobalTime())
+            ]),
+            'input': FunctionNode([Node(NodeType.StringNode, 'message')], [
+                ReturnNode(BaseGlobalInput(VarAccessNode('message')))
             ])
         }
 
@@ -123,9 +126,14 @@ class Interpreter:
         elif expression.type == NodeType.FunctionCallNode:
             return self.visitFunctionCallNode(expression)
 
+        # Globals
         elif expression.type == NodeType.BaseGlobalTime:
             return Node(NodeType.NumberNode, time())
+        elif expression.type == NodeType.BaseGlobalInput:
+            ask_val = self.visitExpression(expression.message).value
+            print(self.visitLogNode(ask_val), end='')
 
+            return Node(NodeType.StringNode, input(''))
         else:
             InvalidStatementTypeError(expression.type, '', self.current_line)
     
