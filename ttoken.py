@@ -49,6 +49,8 @@ class TokenType(Enum):
     FSTRING = 32
     AID = 33
 
+    HLEN = 34
+
 @dataclass
 class Token:
     type: TokenType
