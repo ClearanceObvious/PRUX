@@ -1,4 +1,4 @@
-from otherFunctions import convert
+from otherFunctions import convert, dump_ast
 
 from lexer import *
 from parser_1 import *
@@ -132,6 +132,8 @@ class Interpreter:
             return self.visitIndexNode(expression)
         elif expression.type == NodeType.FunctionCallNode:
             return self.visitFunctionCallNode(expression)
+        elif expression.type == NodeType.LengthOpNode:
+            return self.visitLengthOpNode(expression)
 
         # Globals
         elif expression.type == NodeType.BaseGlobalConverter:
@@ -244,8 +246,8 @@ class Interpreter:
         
         return resultNode
     
-    def visitVarOverrideNode(self, node: Node, regardlessOfExistence: bool = False):
-        self.visitVarCreateNode(node, True, regardlessOfExistence)
+    def visitVarOverrideNode(self, node: Node, regardlessOfExistence: bool = False, enviroment: dict = {}):
+        self.visitVarCreateNode(node, True, regardlessOfExistence, enviroment=enviroment)
 
     def visitVarCreateNode(self, node: VarCreateNode, override: bool=False, regardlessOfExistence: bool = False, enviroment: dict = {}):
         valNode = self.visitExpression(node.value)
@@ -289,11 +291,18 @@ class Interpreter:
         
         symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol
 
+        FF_STRING = False
+
         valNode = None
         for explNode in node.path:
-            valNode = valNode.value[(self.visitExpression(explNode))] if valNode != None else symb[node.name].value[(self.visitExpression(explNode))]
+            try:
+                valNode = valNode.value[self.visitExpression(explNode).value] if valNode != None else symb[node.name].value[self.visitExpression(explNode).value]
+            except Exception:
+                ### String Concatination
+                FF_STRING = True
+                valNode = str(valNode.value)[int(self.visitExpression(explNode).value)] if valNode != None else str(symb[node.name].value)[int(self.visitExpression(explNode).value)]
                 
-        return self.visitExpression(valNode)
+        return self.visitExpression(valNode) if FF_STRING == False else Node(NodeType.StringNode, valNode)
 
     def visitDataStructOverrideNode(self, node: DataStructOverrideNode, enviroment: dict = {}):
         if node.name in self.symbolTable: pass
@@ -472,3 +481,11 @@ class Interpreter:
             ConverterError(converter.nodeType, self.current_line)
         
         return newVal
+
+    def visitLengthOpNode(self, node: LengthOpNode):
+        value = self.visitExpression(node.val)
+
+        if value.type in [NodeType.ObjectNode, NodeType.ArrayNode, NodeType.StringNode]:
+            return Node(NodeType.NumberNode, len(value.value))
+        else:
+            return Node(NodeType.NullNode, 0)
