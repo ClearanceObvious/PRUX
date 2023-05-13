@@ -116,6 +116,7 @@ return [
 
 # Limitations
 
+> ### Global Scope Based, No Enviroment Idea
 > ### Inner Function Scopes
 ```js
 let f1 := (x) {
