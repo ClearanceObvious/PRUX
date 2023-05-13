@@ -84,6 +84,9 @@ class Parser:
                 return Node(self.getNodeFromToken(__type), __val)
             elif self.currentToken.type == TokenType.FSTRING:
                 return self.parse_fstring()
+            elif self.currentToken.type == TokenType.HLEN:
+                self.advance()
+                return LengthOpNode(self.factor())
             elif self.currentToken.type == TokenType.NEG:
                 self.advance()
                 cond = self.factor()
