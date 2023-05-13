@@ -84,6 +84,13 @@ log(user.name);
 log(user.age);
 ```
 
+> ### Length Operator
+
+```js
+let x = [1, 3, 2, 5];
+log(#x);
+```
+
 > ### Importing Files
 
 ```js
@@ -165,5 +172,5 @@ log(tostring(num));
 // <number> tonumber(<string> value)
 
 let str = "31";
-log(tonumber(str))
+log(tonumber(str));
 ```
