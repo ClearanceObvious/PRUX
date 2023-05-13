@@ -31,21 +31,22 @@ class NodeType(Enum):
 
     IndexNode = 13
     DataStructOverrideNode = 14
+    LengthOpNode = 15
 
-    FunctionNode = 15
-    FunctionCallNode = 16
-    ReturnNode = 17
+    FunctionNode = 16
+    FunctionCallNode = 17
+    ReturnNode = 18
 
-    IfStatementNode = 18
-    ForLoopNode = 19
-    WhileLoopNode = 20
-    BreakNode = 21
+    IfStatementNode = 19
+    ForLoopNode = 20
+    WhileLoopNode = 21
+    BreakNode = 22
 
-    BaseGlobalLog = 22
-    BaseGlobalSleep = 23
-    BaseGlobalTime = 24
-    BaseGlobalInput = 25
-    BaseGlobalConverter = 26
+    BaseGlobalLog = 23
+    BaseGlobalSleep = 24
+    BaseGlobalTime = 25
+    BaseGlobalInput = 26
+    BaseGlobalConverter = 27
 
 
 @dataclass
@@ -108,6 +109,11 @@ class DataStructOverrideNode(Node):
         self.name = name
         self.path = path
         self.value = val
+
+class LengthOpNode(Node):
+    def __init__(self, val: Node):
+        super().__init__(NodeType.LengthOpNode, 0)
+        self.val = val
 
 class IndexNode(Node):
     def __init__(self, name: str, path: list):
