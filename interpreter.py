@@ -460,20 +460,21 @@ class Interpreter:
         return string
     
     def visitGlobalConverter(self, converter: BaseGlobalConverter):
-        converter = converter
         newVal = self.visitExpression(converter.nodeValue)
+        retVal = Node(NodeType.StringNode, 0)
         if converter.nodeType == NodeType.NumberNode:
-            newVal.type = NodeType.StringNode
+            retVal.type = NodeType.StringNode
+            retVal.value = newVal.value
         elif converter.nodeType == NodeType.StringNode:
             try:
                 nV = float(newVal.value)
-                newVal = Node(NodeType.NumberNode, nV)
+                retVal = Node(NodeType.NumberNode, nV)
             except Exception:
-                ConverterError(newVal.type, self.current_line, 'Unable to convert to number.')
+                ConverterError(retVal.type, self.current_line, 'Unable to convert to number.')
         else:
             ConverterError(converter.nodeType, self.current_line)
         
-        return newVal
+        return retVal
 
     def visitLengthOpNode(self, node: LengthOpNode):
         value = self.visitExpression(node.val)
