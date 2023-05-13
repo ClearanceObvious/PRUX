@@ -1,4 +1,4 @@
-from otherFunctions import convert, dump_ast
+from otherFunctions import convert
 
 from lexer import *
 from parser_1 import *
