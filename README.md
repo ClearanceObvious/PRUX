@@ -153,3 +153,17 @@ sleep(1);
 let answer = input("What's your name?");
 log(answer);
 ```
+> ### tostring
+```js
+// <string> tostring(<number | string | null | bool> value)
+
+let num = 10;
+log(tostring(num));
+```
+> ### tonumber
+```js
+// <number> tonumber(<string> value)
+
+let str = "31";
+log(tonumber(str))
+```
