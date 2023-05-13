@@ -4,7 +4,7 @@ from otherFunctions import KEYWORDS, BOOL_VAL, NULL_VAL
 
 LETTERS = 'abcdefghijklmnopqrstuvwxyz' + 'abcdefghijklmnopqrstuvwxyz'.upper() + '_'
 IDENTIFIER_LETTERS = LETTERS + '0123456789'
-STRING = IDENTIFIER_LETTERS + '!@#$%^&*()+]}|\\ \';[{:><,/?.~`'
+STRING = IDENTIFIER_LETTERS + '-!@#$%^&*()+]}|\\ \';[{:><,/?.~`'
 
 
 class Lexer:
@@ -32,6 +32,9 @@ class Lexer:
                 if self.currentChar in '\n':
                     self.line += 1
                     tokens.append(Token(TokenType.NEWL, 0))
+                self.advance()
+            elif self.currentChar == '#':
+                tokens.append(Token(TokenType.HLEN, 0))
                 self.advance()
             elif self.currentChar == ',':
                 tokens.append(Token(TokenType.COMMA, 0))
