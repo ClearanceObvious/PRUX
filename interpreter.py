@@ -379,10 +379,12 @@ class Interpreter:
             else:
                 if _else != None:
                     self.visitStatement(_else)
+                    return
             
             if not ranElif:
                 if _else != None:
                     self.visitStatement(_else)
+                    return
         
         self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
     
@@ -402,13 +404,11 @@ class Interpreter:
     def visitForLoopNode(self, frln: ForLoopNode):
         lastSymb = self.symbolTable.copy()
         self.visitStatement(frln.first)
-        idx = 0
+
         while self.visitExpression(frln.condition).value:
             frlnSymb = self.symbolTable.copy()
             self.visitBlock(frln.body)
-            idx += 1
             self.symbolTable = self.diffSymbolTables(frlnSymb, self.symbolTable)
-                    
 
             self.visitStatement(frln.last)
             if len(self.stack['loop']) != 0:
