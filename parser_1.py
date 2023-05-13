@@ -15,7 +15,12 @@ class Parser:
     def advance(self):
         self.currentNum += 1
         if self.currentNum < len(self.tokens):
-            self.currentToken = self.tokens[self.currentNum]
+            while self.currentNum < len(self.tokens) and self.tokens[self.currentNum].type == TokenType.NEWL:
+                self.currentNum += 1
+                self.current_line += 1
+                self.ast.append(Node(NodeType.NewLineNode, 0))
+
+            self.currentToken = self.tokens[self.currentNum] if self.currentNum < len(self.tokens) else None
         else:
             self.currentToken = None
     
@@ -32,7 +37,6 @@ class Parser:
             raise Exception('PARSER METHOD "getNodeFromToken": Unable to cast TokenType to NodeType "{ttype}"')
     def check(self, tokenType: TokenType or list):
         while self.currentToken != None and self.currentToken.type == TokenType.NEWL:
-            self.current_line += 1
             self.advance()
 
         if type(tokenType) == 'list':
@@ -50,7 +54,6 @@ class Parser:
 
     def bcheck(self, tokenType: TokenType):
         while self.currentToken != None and self.currentToken.type == TokenType.NEWL:
-            self.current_line += 1
             self.advance()
 
         if self.currentToken == None or self.currentToken.type != tokenType:
@@ -59,21 +62,14 @@ class Parser:
         return True
     
     def checkNext(self, tokenType: TokenType):
-        ### Skip NEWLs
-        if not (self.currentNum + 1 < len(self.tokens)):
-            return False
-        if self.tokens[self.currentNum + 1].type == TokenType.NEWL:
-            self.advance()
-        while self.currentToken.type == TokenType.NEWL:
-            self.current_line += 1
-            self.advance()
-        if not (self.currentNum + 1 < len(self.tokens)):
-            return False
+        idx = 1
+        while self.currentNum + idx < len(self.tokens) and self.tokens[self.currentNum + idx] == TokenType.NEWL:
+            idx += 1
         
-        if self.tokens[self.currentNum + 1].type != tokenType:
-            return False
-        
-        return True
+        if self.tokens[self.currentNum + idx] != None and self.tokens[self.currentNum + idx].type == tokenType:
+            return True
+
+        return False
 
     def parse_fstring(self):
         print("NOT IMPLEMENTED YET")
