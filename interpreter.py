@@ -1,4 +1,4 @@
-from otherFunctions import convert
+from otherFunctions import convert, dump_ast
 
 from lexer import *
 from parser_1 import *
@@ -46,26 +46,26 @@ class Interpreter:
     def evaluate(self):
         self.visitBlock(self.nodes, True)
     
-    def visitBlock(self, block, main: bool = False, enviroment: dict = {}):
+    def visitBlock(self, block, main: bool = False):
         for node in block:
             if len(self.stack['func']) != 0:
                 return
             if len(self.stack['loop']) != 0:
                 return
             if not main:
-                self.visitStatement(node, block, enviroment=enviroment)
+                self.visitStatement(node, block)
             else:
                 self.visitStatement(node, lookForReturn = True)
             
     
-    def visitStatement(self, statement: Node, block: list = [], lookForReturn: bool = False, enviroment: dict = {}):
+    def visitStatement(self, statement: Node, block: list = [], lookForReturn: bool = False):
         # Internals
         if statement.type == NodeType.VarCreateNode:
-            self.visitVarCreateNode(statement, enviroment=enviroment)
+            self.visitVarCreateNode(statement)
         elif statement.type == NodeType.VarOverrideNode:
-            self.visitVarOverrideNode(statement, enviroment=enviroment)
+            self.visitVarOverrideNode(statement)
         elif statement.type == NodeType.DataStructOverrideNode:
-            self.visitDataStructOverrideNode(statement, enviroment=enviroment)
+            self.visitDataStructOverrideNode(statement)
         elif statement.type == NodeType.IfStatementNode:
             self.visitIfStatementNode(statement)
         elif statement.type == NodeType.WhileLoopNode:
@@ -149,18 +149,19 @@ class Interpreter:
             InvalidStatementTypeError(expression.type, '', self.current_line)
     
     def visitBinOpNode(self, node: BinOpNode):
-        left = convert(self.visitExpression(node.left))
+        left = (self.visitExpression(node.left))
         op = node.op
-        right = convert(self.visitExpression(node.right))
+        right = (self.visitExpression(node.right))
         resultNode = Node(NodeType.NumberNode, 0)
 
-        if node.left.type == NodeType.StringNode or node.right.type == NodeType.StringNode:
+        if left.type == NodeType.StringNode or right.type == NodeType.StringNode:
             if op == TokenType.PLUS:
-                resultNode.value = str(left) + str(right)
-                resultNode.type = NodeType.StringNode
+                return Node(NodeType.StringNode, str(left.value) + str(right.value))
             else:
                 StringConcatenationError(self.current_line)
         else:
+            left = convert(left)
+            right = convert(right)
             if op == TokenType.PLUS:
                 resultNode.value = left + right
             elif op == TokenType.MINUS:
@@ -246,33 +247,21 @@ class Interpreter:
         
         return resultNode
     
-    def visitVarOverrideNode(self, node: Node, regardlessOfExistence: bool = False, enviroment: dict = {}):
-        self.visitVarCreateNode(node, True, regardlessOfExistence, enviroment=enviroment)
+    def visitVarOverrideNode(self, node: Node, regardlessOfExistence: bool = False):
+        self.visitVarCreateNode(node, True, regardlessOfExistence)
 
-    def visitVarCreateNode(self, node: VarCreateNode, override: bool=False, regardlessOfExistence: bool = False, enviroment: dict = {}):
+    def visitVarCreateNode(self, node: VarCreateNode, override: bool=False, regardlessOfExistence: bool = False):
         valNode = self.visitExpression(node.value)
+    
+        if override and node.name in self.iSymbol:
+            self.iSymbol[node.name] = valNode
 
-        if len(enviroment) != 0:
-            if override and node.name in self.iSymbol:
-                self.iSymbol[node.name] = valNode
-            elif override and not (node.name in enviroment) and not regardlessOfExistence:
-                VariableUnexistentError(node.name, self.current_line)
-            elif node.name in enviroment and override == False:
-                VariableError(node.name, self.current_line)
-            elif node.name in enviroment and override == True:
-                enviroment[node.name] = valNode
-            elif not (node.name in enviroment) and override and regardlessOfExistence:
-                enviroment[node.name] = valNode
-        else:    
-            if override and node.name in self.iSymbol:
-                self.iSymbol[node.name] = valNode
+        if node.name in self.symbolTable and override == False:
+            VariableError(node.name, self.current_line)
+        if not (node.name in self.symbolTable) and override == True and not regardlessOfExistence:
+            VariableUnexistentError(node.name, self.current_line)
 
-            if node.name in self.symbolTable and override == False:
-                VariableError(node.name, self.current_line)
-            if not (node.name in self.symbolTable) and override == True and not regardlessOfExistence:
-                VariableUnexistentError(node.name, self.current_line)
-
-            self.symbolTable[node.name] = valNode
+        self.symbolTable[node.name] = valNode
     
     def visitVarAccessNode(self, node: VarAccessNode):
         if node.name in self.symbolTable: pass
@@ -296,20 +285,20 @@ class Interpreter:
         valNode = None
         for explNode in node.path:
             try:
-                valNode = valNode.value[self.visitExpression(explNode).value] if valNode != None else symb[node.name].value[self.visitExpression(explNode).value]
+                valNode = valNode.value[self.visitExpression(explNode)] if valNode != None else symb[node.name].value[self.visitExpression(explNode)]
             except Exception:
                 ### String Concatination
                 FF_STRING = True
                 valNode = str(valNode.value)[int(self.visitExpression(explNode).value)] if valNode != None else str(symb[node.name].value)[int(self.visitExpression(explNode).value)]
-                
+        
         return self.visitExpression(valNode) if FF_STRING == False else Node(NodeType.StringNode, valNode)
 
-    def visitDataStructOverrideNode(self, node: DataStructOverrideNode, enviroment: dict = {}):
+    def visitDataStructOverrideNode(self, node: DataStructOverrideNode):
         if node.name in self.symbolTable: pass
         elif node.name in self.iSymbol: pass
         else: VariableUnexistentError(node.name, self.current_line)
         
-        symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol if len(enviroment) == 0 else enviroment
+        symb = self.symbolTable if node.name in self.symbolTable else self.iSymbol
 
         valNode = symb[node.name]
         if len(node.path) > 1:
@@ -336,7 +325,7 @@ class Interpreter:
         
 
         if len(funNode.block) > 0:
-            self.visitBlock(funNode.block, main=False, enviroment=self.globals.copy())
+            self.visitBlock(funNode.block, main=False)
         
         retVal = self.stack['func'][0] if len(self.stack['func']) > 0 else Node(NodeType.NullNode, 0)
         if len(self.stack['func']) > 0:
@@ -370,6 +359,8 @@ class Interpreter:
 
         ranElif = False
 
+        lastSymb = self.symbolTable.copy()
+
         if len(ifst.elifs) != 0:
             for elf in ifst.elifs:
                 elifs.append(elf)
@@ -392,6 +383,8 @@ class Interpreter:
             if not ranElif:
                 if _else != None:
                     self.visitStatement(_else)
+        
+        self.symbolTable = self.diffSymbolTables(lastSymb, self.symbolTable)
     
     def visitWhileLoopNode(self, whln: WhileLoopNode):
         lastSymb = self.symbolTable.copy()
@@ -399,7 +392,6 @@ class Interpreter:
             whlnSymb = self.symbolTable.copy()
             self.visitBlock(whln.body)
             self.symbolTable = self.diffSymbolTables(whlnSymb, self.symbolTable)
-                
 
             if len(self.stack['loop']) != 0:
                 self.stack['loop'].pop()
@@ -416,6 +408,7 @@ class Interpreter:
             self.visitBlock(frln.body)
             idx += 1
             self.symbolTable = self.diffSymbolTables(frlnSymb, self.symbolTable)
+                    
 
             self.visitStatement(frln.last)
             if len(self.stack['loop']) != 0:
@@ -467,8 +460,8 @@ class Interpreter:
         return string
     
     def visitGlobalConverter(self, converter: BaseGlobalConverter):
+        converter = converter
         newVal = self.visitExpression(converter.nodeValue)
-        print(self.current_line)
         if converter.nodeType == NodeType.NumberNode:
             newVal.type = NodeType.StringNode
         elif converter.nodeType == NodeType.StringNode:
