@@ -2,7 +2,7 @@ from ttoken import TokenType
 from nodes import *
 from error import InvalidSyntaxError
 
-from otherFunctions import KEYWORDS
+from otherFunctions import KEYWORDS, dump_ast
 
 class Parser:
     def __init__(self, tokens) -> None:
@@ -53,7 +53,7 @@ class Parser:
         return val
 
     def bcheck(self, tokenType: TokenType):
-        while self.currentToken != None and self.currentToken.type == TokenType.NEWL:
+        if self.currentToken != None and self.currentToken.type == TokenType.NEWL:
             self.advance()
 
         if self.currentToken == None or self.currentToken.type != tokenType:
@@ -68,7 +68,7 @@ class Parser:
         
         if self.tokens[self.currentNum + idx] != None and self.tokens[self.currentNum + idx].type == tokenType:
             return True
-
+        
         return False
 
     def parse_fstring(self):
@@ -134,6 +134,7 @@ class Parser:
                     self.check(TokenType.COMMA)
                     valueList[Node(NodeType.NumberNode, idx)] = self.expression()
                     idx += 1
+                
                 
                 self.check(TokenType.RSQPAREN)
                 return ArrayNode(valueList)
@@ -415,6 +416,8 @@ class Parser:
                         elseBlock = self.block(True)
                         self.check(TokenType.RCPAREN)
                         _else = IfStatementNode(CondNode(Node(NodeType.NumberNode, 0), TokenType.EEQ, Node(NodeType.NumberNode, 0)), elseBlock)
+                else:
+                    break
                             
 
         return IfStatementNode(condition, block, elifs, _else)
