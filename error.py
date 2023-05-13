@@ -18,6 +18,7 @@ class ErrorType(Enum):
     StringConcatenationError = 5
     VariableError = 6
     FunctionArgumentError = 7
+    ConverterError = 8
 
 class BaseError:
     def __init__(self, type: ErrorType, message: str = 'Base Unknown Error Case', line: int=1):
@@ -70,6 +71,12 @@ class VariableUnexistentError(BaseError):
         message = f'Variable {varName} does not exist.'
 
         super().__init__(ErrorType.VariableError, message, line)
+
+class ConverterError(BaseError):
+    def __init__(self, nodeType, line: int = 1, additionMessage: str = None):
+        message = f'Can only convert numbers and strings, {nodeType.name} is invalid.' if additionMessage == None else additionMessage
+
+        super().__init__(ErrorType.ConverterError, message, line)
 
 class FunctionArgumentError(BaseError):
     def __init__(self, numOfArguments, numOfParamaters, line: int=1):
